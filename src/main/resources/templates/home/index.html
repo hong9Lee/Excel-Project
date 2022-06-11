@@ -1,13 +1,236 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<link th:href="@{/css/main.css}" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/webuploader/0.1.1/webuploader.min.js"></script>
 <head>
-    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Title</title>
 </head>
 <body>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="uploadFile" multiple="multiple">
-        <input type="submit">
-    </form>
+<form action="/upload" method="post" enctype="multipart/form-data">
+    <div class="mainDiv">
+        <div class="innerDiv">
+            </br>
+
+<!--            <div id="picker"> 파일 </div>-->
+            <input type="file" id="input-file" name="uploadFile">
+            <div id="target_file_wrap">
+                <a href="#" onclick="$('#input-file').click()" class="btn btn-primary">첨부파일 선택</a>
+                <span></span>
+            </div>
+
+            </br></br>
+
+            <button class="btn" type="button" name="title" value="jdbc" onclick="upload(this.value)"> JDBC</button>
+            <span th:id="jdbcResult"></span>
+            </br></br>
+
+
+            <button class="btn" type="button" name="title" value="myBatis" onclick="upload(this.value)"> MyBatis</button>
+            <span th:id="myBatisResult"></span>
+            </br></br>
+
+            <button class="btn" type="button" name="title" value="jpa" onclick="upload(this.value)"> JPA</button>
+            <span th:id="jpaResult"/>
+            </br></br>
+
+            <div id="output">
+            </div>
+
+        </div>
+    </div>
+</form>
+
 </body>
+<script type="text/javascript">
+    let title;
+    var status = 0;
+
+    $(document).ready(function ($){
+        var target_id = "input-file";
+        $("#" + target_id).bind('change', function (){
+            selectFile(this.files, target_id);
+        });
+    }); // 파일 선택시
+    function selectFile(fileObject, target_id){
+        var files = null;
+        var totalFileSize = 0; // 직접 파일 등록시
+        files = jQuery('#' + target_id)[0].files; // 다중파일 등록
+        if (files != null) {
+            for (var i = 0; i < files.length; i++) { // 파일 이름
+                var fileName = files[i].name;
+                var fileNameArr = fileName.split("\."); // 확장자
+                var ext = fileNameArr[fileNameArr.length - 1];
+                var fileSize = files[i].size; // 파일 사이즈(단위 :byte)
+                console.log("fileSize=" + fileSize);
+                if (fileSize <= 0) {
+                    console.log("0kb file return");
+                    return;
+                }
+                var fileSizeKb = fileSize / 1024; // 파일 사이즈(단위 :kb)
+                var fileSizeMb = fileSizeKb / 1024; // 파일 사이즈(단위 :Mb)
+                var fileSizeStr = "";
+                if ((1024 * 1024) <= fileSize) { // 파일 용량이 1메가 이상인 경우
+                    console.log("fileSizeMb=" + fileSizeMb.toFixed(2));
+                    fileSizeStr = fileSizeMb.toFixed(2) + " Mb";
+                } else if ((1024) <= fileSize) {
+                    console.log("fileSizeKb=" + parseInt(fileSizeKb));
+                    fileSizeStr = parseInt(fileSizeKb) + " kb";
+                } else {
+                    console.log("fileSize=" + parseInt(fileSize));
+                    fileSizeStr = parseInt(fileSize) + " byte";
+                } // 업로드 파일 목록 생성
+                jQuery("#target_file_wrap").find('span').html('첨부 파일 : ' + fileName + ' (' + fileSizeStr + ')');
+            }
+        } else {
+            alert("ERROR");
+        }
+    }
+
+    var page = {
+        init: function(){
+            $(".btn").click($.proxy(this.upload, this));
+        },
+        upload: function(){
+            console.log("UPLOAD~!")
+
+            status = 0;
+            var GUID = this.guid();
+            var file = $ ("#input-file")[0].files[0] // 파일 객체
+            var name = file.name // 파일 이름
+            var size = file.size;// 총합 크기
+            var shardSize = 30 * 1024 * 1024 // 슬라이스 1MB로
+            var shardCount = Math.ceil(size / shardSize);// 조각의 총 수
+            for(var i = 0;i < shardCount;++i){
+                //시작과 끝 위치 각각에 대해 계산
+                var start = i * shardSize
+                var end = Math.min(size, start + shardSize);
+                var partFile = file.slice(start,end);
+                this.partUpload(GUID,partFile,name,shardCount,i);
+            }
+        },
+        partUpload:function(GUID,partFile,name,chunks,chunk){
+            //양식을 구축, FormData는 HTML5의 새로운
+            var now = this;
+            var form = new FormData();
+            form.append("guid", GUID);
+            form.append("file", partFile);//slice 파일의 일부를 절단하는 방법
+            form.append("fileName", name);
+            form.append("chunks", chunks);// 조각의 총 수
+            form.append("chunk", chunk);// 현재는 여러 조각의 첫 번째입니다
+            //Ajax 제출
+            $.ajax({
+                url: "http://localhost:8080/part",
+                type: "POST",
+                data: form,
+                async: true, // 비동기
+                processData: false,
+                contentType: false,
+                success: function(data){
+                    status++;
+                    if(data.code == 200){
+                        $("#output").html(status+ " / " + chunks);
+                    }
+                    if(status==chunks){
+                        now.mergeFile(GUID,name);
+                    }
+                }
+            });
+        },
+        mergeFile:function(GUID,name){
+            var formMerge = new FormData();
+            formMerge.append("guid", GUID);
+            formMerge.append("fileName", name);
+            $.ajax({
+                url: "http://localhost:8080/merge",
+                type: "POST",
+                data: formMerge,
+                processData: false,
+                contentType: false,
+                success: function(data){
+                    if(data.code == 200){
+                        $.ajax({
+                            url : "/upload",
+                            type : "POST",
+                            data : {
+                                title : title,
+                                filePath : data.fileName
+                            },
+                            success:function(response) {
+                                if(response.jdbc != undefined) $("#jdbcResult").text("수행시간 : " + response.jdbc + "(s)");
+                                if(response.myBatis != undefined) $("#myBatisResult").text("수행시간 : " + response.myBatis + "(s)");
+                                if(response.jpa != undefined) $("#jpaResult").text("수행시간 : " + response.jpa + "(s)");
+                            },
+                            error: function (jqXHR) {}
+                        });
+                    }
+                }
+            });
+        },
+        guid:function(prefix){
+            var counter = 0;
+            var guid = (+new Date()).toString( 32 ),
+                i = 0;
+            for ( ; i < 5; i++ ) {
+                guid += Math.floor( Math.random() * 65535 ).toString( 32 );
+            }
+            return (prefix || 'wu_') + guid + (counter++).toString( 32 );
+        }
+    };
+
+    $(function(){
+        page.init();
+    });
+
+    function upload(data){
+        console.log("TITLE => ", data)
+        title = data;
+    }
+
+
+
+/*
+    $(document).ready(function ($){
+        var target_id = "input-file";
+        $("#" + target_id).bind('change', function (){
+            selectFile(this.files, target_id);
+        });
+    }); // 파일 선택시
+    function selectFile(fileObject, target_id){
+        var files = null;
+        var totalFileSize = 0; // 직접 파일 등록시
+        files = jQuery('#' + target_id)[0].files; // 다중파일 등록
+        if (files != null) {
+            for (var i = 0; i < files.length; i++) { // 파일 이름
+                var fileName = files[i].name;
+                var fileNameArr = fileName.split("\."); // 확장자
+                var ext = fileNameArr[fileNameArr.length - 1];
+                var fileSize = files[i].size; // 파일 사이즈(단위 :byte)
+                console.log("fileSize=" + fileSize);
+                if (fileSize <= 0) {
+                    console.log("0kb file return");
+                    return;
+                }
+                var fileSizeKb = fileSize / 1024; // 파일 사이즈(단위 :kb)
+                var fileSizeMb = fileSizeKb / 1024; // 파일 사이즈(단위 :Mb)
+                var fileSizeStr = "";
+                if ((1024 * 1024) <= fileSize) { // 파일 용량이 1메가 이상인 경우
+                    console.log("fileSizeMb=" + fileSizeMb.toFixed(2));
+                    fileSizeStr = fileSizeMb.toFixed(2) + " Mb";
+                } else if ((1024) <= fileSize) {
+                    console.log("fileSizeKb=" + parseInt(fileSizeKb));
+                    fileSizeStr = parseInt(fileSizeKb) + " kb";
+                } else {
+                    console.log("fileSize=" + parseInt(fileSize));
+                    fileSizeStr = parseInt(fileSize) + " byte";
+                } // 업로드 파일 목록 생성
+                jQuery("#target_file_wrap").find('span').html('첨부 파일 : ' + fileName + ' (' + fileSizeStr + ')');
+            }
+        } else {
+            alert("ERROR");
+        }
+    }
+ */
+</script>
 </html>
