@@ -2,10 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="dev.excel.utils.mapper.DataMapper">
-    <select id="findAll" resultType="HashMap">
-        select * from excel_data;
+    <select id="findAll" resultType="dev.excel.dto.SampleVO">
+        select * from sample_data2;
     </select>
-
 
     <insert id="insertData" parameterType="java.util.List" useGeneratedKeys="true">
             insert into excel_data (user_num, apply_date, apply_num, report, category, api_data, db_data)
@@ -26,40 +25,4 @@
     <delete id="deleteAll">
         delete from excel_data;
     </delete>
-
 </mapper>
-
-
-<!--<mapper namespace="file.web.dao.MasterUpdateDao">-->
-
-
-<!--    <select id="masterUpdateTotalCount" resultType="Integer">-->
-<!--        SELECT count(*) FROM-->
-
-<!--        <include refid="tableSelect" />-->
-
-<!--        WHERE userid=#{userid}-->
-<!--    </select>-->
-
-
-<!--    <select id="masterUpdateList" resultType="file.web.domain.MasterTableVO">-->
-<!--        SELECT A.* FROM (-->
-
-<!--        SELECT  @rownum:=@rownum+1 as no , b.* FROM-->
-
-<!--        <include refid="tableSelect" />-->
-
-<!--        b, (select @rownum:=0) tmp-->
-
-<!--        WHERE userid=#{userid} ORDER BY idx ASC-->
-
-<!--        ) AS A ORDER BY no DESC LIMIT #{pageStart}, #{perPageNum}-->
-<!--    </select>-->
-
-
-
-
-
-
-<!--</mapper>-->
-

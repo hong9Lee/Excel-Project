@@ -1,13 +1,13 @@
 package dev.excel.repository;
 
 import dev.excel.dto.ColumnsVO;
+import dev.excel.dto.SampleVO;
 import dev.excel.utils.mapper.DataMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 @Repository
@@ -18,7 +18,7 @@ public class MybatisRepository implements DataRepository {
     private final DataMapper dataMapper;
 
     @Override
-    public ArrayList<HashMap<String, Object>> findAll() {
+    public ArrayList<Class<?>> findAll() {
         return dataMapper.findAll();
     }
 

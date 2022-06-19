@@ -1,8 +1,9 @@
 package dev.excel.repository;
 
 import dev.excel.dto.ColumnsVO;
+import dev.excel.dto.SampleVO;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface DataJpaRepository extends JpaRepository<ColumnsVO, Long> {
+public interface DataJpaRepository extends JpaRepository<SampleVO, Long> {
 
 }

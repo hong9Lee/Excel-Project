@@ -12,11 +12,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import javax.sql.DataSource;
 
+/**
+ * Mybatis 설정파일
+ */
+
 @Configuration
 public class MyBatisConfig {
 
-    @Value("${spring.datasource.mapper-locations}")
-    String mPath;
+    @Value("classpath:/mapper/**/*.xml")
+    String mapperPath;
+
+    @Value("classpath:/conf/mybatis-config.xml")
+    String configPath;
 
     @Bean(name = "dataSource")
     @ConfigurationProperties(prefix = "spring.datasource")
@@ -24,12 +31,12 @@ public class MyBatisConfig {
         return DataSourceBuilder.create().build();
     }
 
-
     @Bean(name = "SqlSessionFactory")
     public SqlSessionFactory SqlSessionFactory(@Qualifier("dataSource") DataSource DataSource, ApplicationContext applicationContext) throws Exception {
         SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
         sqlSessionFactoryBean.setDataSource(DataSource);
-        sqlSessionFactoryBean.setMapperLocations(applicationContext.getResources(mPath));
+        sqlSessionFactoryBean.setMapperLocations(applicationContext.getResources(mapperPath));
+        sqlSessionFactoryBean.setConfigLocation(applicationContext.getResource(configPath));
         return sqlSessionFactoryBean.getObject();
     }
 
@@ -37,5 +44,4 @@ public class MyBatisConfig {
     public SqlSessionTemplate SqlSessionTemplate(@Qualifier("SqlSessionFactory") SqlSessionFactory firstSqlSessionFactory) {
         return new SqlSessionTemplate(firstSqlSessionFactory);
     }
-
 }

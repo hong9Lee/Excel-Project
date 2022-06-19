@@ -21,55 +21,51 @@ import org.xml.sax.XMLReader;
 
 public class ExcelSheetHandler implements SheetContentsHandler{
     private int currentCol = -1;
-    private int currRowNum    =  0;
-
-    String filePath            = "";
+    private int currRowNum = 0;
+    String filePath = "";
 
     private List<List<String>> rows = new ArrayList<List<String>>();    //실제 엑셀을 파싱해서 담아지는 데이터
-    private List<String>       row    = new ArrayList<String>();
-    private List<String>     header    = new ArrayList<String>();
+    private List<String> row = new ArrayList<String>();
+    private List<String> header = new ArrayList<String>();
 
-    public static ExcelSheetHandler readExcel(MultipartFile file) throws Exception{
+    public static ExcelSheetHandler readExcel(MultipartFile file) {
 
         ExcelSheetHandler sheetHandler = new ExcelSheetHandler();
         try{
-
             //org.apache.poi.openxml4j.opc.OPCPackage
-            OPCPackage opc            = OPCPackage.open(file.getInputStream());
+            OPCPackage opc = OPCPackage.open(file.getInputStream());
 
             //org.apache.poi.xssf.eventusermodel.XSSFReader
-            XSSFReader xssfReader    = new XSSFReader(opc);
+            XSSFReader xssfReader = new XSSFReader(opc);
 
             //org.apache.poi.xssf.model.StylesTable
-            StylesTable styles        = xssfReader.getStylesTable();
+            StylesTable styles = xssfReader.getStylesTable();
 
             //org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable
-            ReadOnlySharedStringsTable strings    = new ReadOnlySharedStringsTable(opc);
+            ReadOnlySharedStringsTable strings = new ReadOnlySharedStringsTable(opc);
 
-            //엑셀의 시트를 하나만 가져오기입니다.
-            //여러개일경우 while문으로 추출하셔야 됩니다.
-            InputStream inputStream    = xssfReader.getSheetsData().next();
+            // 엑셀의 시트를 하나만 가져오기
+            // 여러개일경우 while문으로 추출 필요
+            InputStream inputStream = xssfReader.getSheetsData().next();
 
-            //org.xml.sax.InputSource
-            InputSource    inputSource = new InputSource(inputStream);
+            // org.xml.sax.InputSource
+            InputSource inputSource = new InputSource(inputStream);
 
-            //org.xml.sax.Contenthandler
-            ContentHandler handle    = new XSSFSheetXMLHandler(styles, strings, sheetHandler, false);
+            // org.xml.sax.Contenthandler
+            ContentHandler handle = new XSSFSheetXMLHandler(styles, strings, sheetHandler, false);
 
-            XMLReader xmlReader        = SAXHelper.newXMLReader();
+            XMLReader xmlReader = SAXHelper.newXMLReader();
             xmlReader.setContentHandler(handle);
 
             xmlReader.parse(inputSource);
 
             inputStream.close();
             opc.close();
-
-        }catch(Exception e){
-            //에러 발생했을때 하시고 싶은 TO-DO
+        }catch(Exception e) { //에러 발생했을때 하시고 싶은 TO-DO
             System.out.println(e);
+            throw new IllegalStateException();
         }
         return sheetHandler;
-
     }//readExcel - end
 
     public List<List<String>> getRows(){
@@ -79,7 +75,7 @@ public class ExcelSheetHandler implements SheetContentsHandler{
     @Override
     public void startRow(int arg0){
         this.currentCol = -1;
-        this.currRowNum    = arg0;
+        this.currRowNum = arg0;
     }
 
     @Override
@@ -95,17 +91,13 @@ public class ExcelSheetHandler implements SheetContentsHandler{
     }
 
     @Override
-    public void headerFooter(String arg0, boolean arg1, String arg2){
-        //사용안합니다.
-    }
-
+    public void headerFooter(String arg0, boolean arg1, String arg2){}
 
     @Override
     public void endRow(int rowNum){
         if(rowNum == 0){
             header = new ArrayList(row);
-        }
-        else{
+        } else{
             if(row.size() < header.size()){
                 for(int i = row.size(); i<header.size(); i++){
                     row.add("");
