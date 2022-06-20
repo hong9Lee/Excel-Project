@@ -7,7 +7,6 @@ import java.util.List;
 import org.apache.poi.ooxml.util.SAXHelper;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.util.CellReference;
-//import org.apache.poi.util.SAXHelper;
 import org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
@@ -24,9 +23,9 @@ public class ExcelSheetHandler implements SheetContentsHandler{
     private int currRowNum = 0;
     String filePath = "";
 
-    private List<List<String>> rows = new ArrayList<List<String>>();    //실제 엑셀을 파싱해서 담아지는 데이터
-    private List<String> row = new ArrayList<String>();
-    private List<String> header = new ArrayList<String>();
+    private List<List<String>> rows = new ArrayList<>();    //실제 엑셀을 파싱해서 담아지는 데이터
+    private List<String> row = new ArrayList<>();
+    private List<String> header = new ArrayList<>();
 
     public static ExcelSheetHandler readExcel(MultipartFile file) {
 
@@ -56,7 +55,6 @@ public class ExcelSheetHandler implements SheetContentsHandler{
 
             XMLReader xmlReader = SAXHelper.newXMLReader();
             xmlReader.setContentHandler(handle);
-
             xmlReader.parse(inputSource);
 
             inputStream.close();
@@ -91,7 +89,7 @@ public class ExcelSheetHandler implements SheetContentsHandler{
     }
 
     @Override
-    public void headerFooter(String arg0, boolean arg1, String arg2){}
+    public void headerFooter(String arg0, boolean arg1, String arg2) { }
 
     @Override
     public void endRow(int rowNum){

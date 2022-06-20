@@ -3,26 +3,46 @@
 
 <mapper namespace="dev.excel.utils.mapper.DataMapper">
     <select id="findAll" resultType="dev.excel.dto.SampleVO">
-        select * from sample_data2;
+        select * from data_mybatis_1;
     </select>
 
     <insert id="insertData" parameterType="java.util.List" useGeneratedKeys="true">
-            insert into excel_data (user_num, apply_date, apply_num, report, category, api_data, db_data)
+            insert into data_mybatis_1 (user_id, sample1, sample2, sample3, sample4, sample5
+            , sample6, sample7, sample8, sample9, sample10, sample11, sample12, sample13, sample14
+            , sample15, sample16, sample17, sample18, sample19, sample20, sample21, sample22, sample23, sample24)
             VALUES
             <foreach collection="list" item="item" index="index" separator=",">
                 (
-                "${item.userNum}",
-                "${item.applyDate}",
-                "${item.applyNum}",
-                "${item.report}",
-                "${item.category}",
-                "${item.apiData}",
-                "${item.dbData}"
+                "${item.userId}",
+                "${item.sample1}",
+                "${item.sample2}",
+                "${item.sample3}",
+                "${item.sample4}",
+                "${item.sample5}",
+                "${item.sample6}",
+                "${item.sample7}",
+                "${item.sample8}",
+                "${item.sample9}",
+                "${item.sample10}",
+                "${item.sample11}",
+                "${item.sample12}",
+                "${item.sample13}",
+                "${item.sample14}",
+                "${item.sample15}",
+                "${item.sample16}",
+                "${item.sample17}",
+                "${item.sample18}",
+                "${item.sample19}",
+                "${item.sample20}",
+                "${item.sample21}",
+                "${item.sample22}",
+                "${item.sample23}",
+                "${item.sample24}"
                 )
             </foreach>
     </insert>
 
     <delete id="deleteAll">
-        delete from excel_data;
+        delete from data_mybatis_1;
     </delete>
 </mapper>

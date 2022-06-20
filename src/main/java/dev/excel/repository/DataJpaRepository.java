@@ -1,6 +1,5 @@
 package dev.excel.repository;
 
-import dev.excel.dto.ColumnsVO;
 import dev.excel.dto.SampleVO;
 import org.springframework.data.jpa.repository.JpaRepository;
 

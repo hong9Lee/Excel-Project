@@ -1,21 +1,37 @@
 package dev.excel.utils.connection;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.jdbc.support.JdbcUtils;
 
+import javax.sql.DataSource;
 import java.sql.*;
 
 @Slf4j
 public class DBConnectionUtil {
 
-    public static Connection getConnection() {
-        try {
-            Connection connection = DriverManager.getConnection(ConnectionConst.URL, ConnectionConst.USERNAME, ConnectionConst.PASSWORD);
-            log.info("get connection={}, class={}", connection, connection.getClass());
-            return connection;
-        } catch (SQLException e) {
-            throw new IllegalStateException();
-        }
+    /**
+     * JDBC Get Connection (DataSource)
+     * 트랜잭션 동기를 사용하려면 DataSourceUtils를 사용해야 한다.
+     */
+    public static Connection getConnection(DataSource dataSource) {
+        Connection con = DataSourceUtils.getConnection(dataSource);
+        log.info("GET connection={}, class={}", con, con.getClass());
+        return con;
     }
+
+    /**
+     * JDBC Connection Close
+     */
+    public static void close(Connection con, Statement stmt, ResultSet rs, DataSource dataSource) { // 커넥션 얻은 역순으로 close()
+        JdbcUtils.closeResultSet(rs);
+        JdbcUtils.closeStatement(stmt);
+
+        // 트랜잭션 동기화를 사용하려면 DataSourceUtils를 사용해야한다.
+        DataSourceUtils.releaseConnection(con, dataSource);
+        log.info("CLOSE connection={}, class={}", con, con.getClass());
+    }
+
 
     public static Connection getConnectionByBulkApi() {
         try {
@@ -27,29 +43,4 @@ public class DBConnectionUtil {
         }
     }
 
-    public static void close(Connection con, Statement stmt, ResultSet rs) { // 커넥션 얻은 역순으로 close()
-        if (rs != null) {
-            try {
-                rs.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-            }
-        }
-
-        if (stmt != null) {
-            try {
-                stmt.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-            }
-        }
-
-        if (con != null) {
-            try {
-                con.close();
-            } catch (SQLException e) {
-                log.info("error", e);
-            }
-        }
-    }
 }

@@ -1,7 +1,5 @@
 package dev.excel.repository;
 
-import dev.excel.dto.ColumnsVO;
-import dev.excel.dto.SampleVO;
 import dev.excel.utils.mapper.DataMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,21 +11,16 @@ import java.util.List;
 @Repository
 @Slf4j
 @RequiredArgsConstructor
-public class MybatisRepository implements DataRepository {
+public class MybatisRepository {
 
     private final DataMapper dataMapper;
 
-    @Override
-    public ArrayList<Class<?>> findAll() {
-        return dataMapper.findAll();
-    }
+    public ArrayList<Class<?>> findAll() { return dataMapper.findAll(); }
 
-    @Override
-    public void insertData(List<ColumnsVO> list) {
+    public void insertData(List<Object> list) {
         dataMapper.insertData(list);
     }
 
-    @Override
     public void deleteAll() {
         dataMapper.deleteAll();
     }

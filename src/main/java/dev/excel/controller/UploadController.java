@@ -32,8 +32,7 @@ public class UploadController {
     private final UploadService uploadService;
 
     @PostMapping("/upload") // MultipartFile => 큰 파일을 청크 단위로 쪼개서 업로드
-    public ModelAndView upload(@RequestParam("title") String title, @RequestParam("filePath") String path
-                            , Model model) throws Exception {
+    public ModelAndView upload(@RequestParam("title") String title, @RequestParam("filePath") String path, Model model) {
         log.info("FILE PATH => " + path);
         log.info("DB TITLE : " + title);
 

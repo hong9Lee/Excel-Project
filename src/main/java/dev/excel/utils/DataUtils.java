@@ -1,6 +1,5 @@
 package dev.excel.utils;
 
-import dev.excel.dto.ColumnsVO;
 import dev.excel.utils.handler.ExcelSheetHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload.FileItem;
@@ -61,36 +60,6 @@ public class DataUtils {
         return ret;
     }
 
-    public static List<ColumnsVO> getDataList(MultipartFile uploadFile) {
-        ExcelSheetHandler excelSheetHandler = new ExcelSheetHandler();
-        ExcelSheetHandler handler = excelSheetHandler.readExcel(uploadFile);
-        List<List<String>> excelData = handler.getRows();
-
-        log.info("GET DATA LIST SIZE ==> " + excelData.size());
-        List<ColumnsVO> list = new ArrayList<>();
-        for (List<String> data : excelData) {
-            int iCol = 0;
-            ColumnsVO columnsVO = new ColumnsVO();
-
-            for (String datum : data) {
-                if (datum == null || datum == "") datum = null;
-                if (datum != null) datum = datum.replaceAll("\"", "'");
-                if (datum != null) datum = datum.replaceAll("\'", "`");
-
-                if (iCol == 0) columnsVO.setUserNum(datum);
-                else if (iCol == 1) columnsVO.setApplyDate(datum);
-                else if (iCol == 2) columnsVO.setApplyNum(datum);
-                else if (iCol == 3) columnsVO.setReport(datum);
-                else if (iCol == 4) columnsVO.setCategory(datum);
-                else if (iCol == 5) columnsVO.setApiData(datum);
-                else if (iCol == 6) columnsVO.setDbData(datum);
-                iCol++;
-            }
-            list.add(columnsVO);
-        }
-        return list;
-    }
-
     /**
      * MultipartFile 형태의 Input 엑셀파일을 Parsing 하여 List<List<String>>로 반환
      */
@@ -101,29 +70,38 @@ public class DataUtils {
         return excelData;
     }
 
-    public static List<Object> getClazzDataList(MultipartFile uploadFile, Class<?> clazz) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public static List<Object> getClazzDataList(MultipartFile uploadFile, Class<?> clazz) {
         List<List<String>> excelData = getExcelParsingData(uploadFile);
         log.info("GET DATA LIST SIZE ==> " + excelData.size());
 
-        Class<?> inst = Class.forName(clazz.getName());
-        Field[] declaredFields = clazz.getDeclaredFields();
+        try {
+            Class<?> inst = Class.forName(clazz.getName());
+            Field[] declaredFields = clazz.getDeclaredFields();
 
-        List<Object> list = new ArrayList<>();
-        for (List<String> data : excelData) {
-            Object obj = inst.newInstance();
+            List<Object> list = new ArrayList<>();
+            for (List<String> data : excelData) {
+                Object obj = inst.newInstance();
 
-            for (int i = 0; i < data.size(); i++) {
-                Field declaredField = declaredFields[i + 1];
-                declaredField.setAccessible(true);
-                declaredField.set(obj, data.get(i));
+                for (int i = 0; i < data.size(); i++) {
+                    Field declaredField = declaredFields[i + 1];
+                    declaredField.setAccessible(true);
+                    declaredField.set(obj, data.get(i));
+                }
+                list.add(obj);
             }
-            list.add(obj);
+            return list;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
-        return list;
+        return Collections.emptyList();
     }
 
     public static Map<String, Object> beanProperties(final Object bean) {
-        final Map<String, Object> result = new HashMap<String, Object>();
+        final Map<String, Object> result = new HashMap<>();
 
         try {
             final PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(bean.getClass(), Object.class).getPropertyDescriptors();
@@ -136,13 +114,12 @@ public class DataUtils {
         } catch (Exception ex) {
             // ignore
         }
-
         return result;
     }
 
 
     /**
-     * JDBC를 이용하여 데이터 Insert시 쿼리를 묶기위해 전처리하는 메소드
+     * JDBC를 이용하여 데이터 Insert 쿼리를 묶기위해 전처리하는 메소드
      * ex) insert into TABLE_NAME (column1, colum2) VALUES (1, A), (2, B), (3, C) ,,,;
      */
     public static String getAppendQueryByObj(List<Object> dataList) {
@@ -167,39 +144,16 @@ public class DataUtils {
         return sb.toString();
     }
 
-    public static String getAppendQuery(List<ColumnsVO> dataList) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < dataList.size(); i++) {
-            sb.append("(" + "\'" + dataList.get(i).getUserNum() + "\',"
-                    + "\'" + dataList.get(i).getApplyDate() + "\',"
-                    + "\'" + dataList.get(i).getApplyNum() + "\',"
-                    + "\'" + dataList.get(i).getReport() + "\',"
-                    + "\'" + dataList.get(i).getCategory() + "\',"
-                    + "\'" + dataList.get(i).getApiData() + "\',"
-                    + "\'" + dataList.get(i).getDbData()
-                    + "\'), ");
-
-            if (i + 1 == dataList.size()) {
-                sb.append("(" + "\'" + dataList.get(i).getUserNum() + "\',"
-                        + "\'" + dataList.get(i).getApplyDate() + "\',"
-                        + "\'" + dataList.get(i).getApplyNum() + "\',"
-                        + "\'" + dataList.get(i).getReport() + "\',"
-                        + "\'" + dataList.get(i).getCategory() + "\',"
-                        + "\'" + dataList.get(i).getApiData() + "\',"
-                        + "\'" + dataList.get(i).getDbData()
-                        + "\');");
-            }
-        }
-        return sb.toString();
-    }
-
     /**
      * Upload File을 MultipartFile로 반환
      */
-    public static MultipartFile getUploadFile(String path) throws IOException {
+    public static MultipartFile getUploadFile(String path) {
         File file = new File(path);
-        FileItem fileItem = new DiskFileItem("mainFile", Files.probeContentType(file.toPath()), false, file.getName(), (int) file.length(), file.getParentFile());
+        FileItem fileItem = null;
+
         try {
+            fileItem = new DiskFileItem("mainFile", Files.probeContentType(file.toPath()), false, file.getName(), (int) file.length(), file.getParentFile());
+
             InputStream input = new FileInputStream(file);
             OutputStream os = fileItem.getOutputStream();
             IOUtils.copy(input, os);

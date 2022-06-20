@@ -1,6 +1,5 @@
 package dev.excel;
 
-import dev.excel.dto.ColumnsVO;
 import dev.excel.dto.SampleVO;
 import dev.excel.service.DownloadService;
 import dev.excel.utils.handler.SheetExcelFile;
@@ -29,7 +28,7 @@ public class DownloadTest {
     @Description("엑셀 다운로드 테스트")
     @Transactional
     public void excelDownloadTest() throws SQLException, IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        SheetExcelFile<ColumnsVO> excelFile = new SheetExcelFile<>(ColumnsVO.class);
+        SheetExcelFile<SampleVO> excelFile = new SheetExcelFile<>(SampleVO.class);
         String tableNm = "excel_data";
         int jdbcDataSize = downloadService.getJdbcDataSize(tableNm);
 
@@ -45,7 +44,7 @@ public class DownloadTest {
 
         System.out.println(dataList.size());
 
-        List<ColumnsVO> retList = (List<ColumnsVO>) (List<?>) dataList;
+        List<SampleVO> retList = (List<SampleVO>) (List<?>) dataList;
         excelFile.addRows(retList);
         FileOutputStream stream = new FileOutputStream("/Users/ihong-gyu/Desktop/sample1.xlsx");
         excelFile.write(stream);

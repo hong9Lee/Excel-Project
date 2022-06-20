@@ -12,7 +12,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "sample_data2")
+@Table(name = "data_jpa_1")
 public class SampleVO {
 
     @Id
