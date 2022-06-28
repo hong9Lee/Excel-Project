@@ -1,24 +1,38 @@
 package dev.excel.utils;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static dev.excel.utils.resource.ExcelRenderResourceFactory.getDbField;
 
+@Slf4j
 public class SuperClassReflectionUtils {
 
-    public static Field getField(Class<?> clazz, String name) throws Exception {
+    /**
+     * get field
+     */
+    public static Field getField(Class<?> clazz, String name) {
         for (Class<?> clazzInClasses : getAllClassesIncludingSuperClasses(clazz, false)) {
             for (Field field : clazzInClasses.getDeclaredFields()) {
                 if (field.getName().equals(name)) {
-                    return clazzInClasses.getDeclaredField(name);
+                    try {
+                        return clazzInClasses.getDeclaredField(name);
+                    } catch (NoSuchFieldException e) {
+                        log.error("NoSuchFieldException", e);
+                    }
                 }
             }
         }
-        throw new NoSuchFieldException();
+        return null;
     }
 
+
+    /**
+     * get SuperClass List
+     */
     private static List<Class<?>> getAllClassesIncludingSuperClasses(Class<?> clazz, boolean fromSuper) {
         List<Class<?>> classes = new ArrayList<>();
         while (clazz != null) {
@@ -48,7 +62,7 @@ public class SuperClassReflectionUtils {
         Field[] declaredFields = clazz.getDeclaredFields();
 
         StringBuilder sb = new StringBuilder();
-        if(declaredFields.length != 0) {
+        if (declaredFields.length != 0) {
             sb.append("(");
             sb.append(Arrays.stream(declaredFields)
                     .map(item -> getDbField(item))

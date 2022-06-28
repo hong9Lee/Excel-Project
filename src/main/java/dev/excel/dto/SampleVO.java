@@ -4,20 +4,23 @@ import dev.excel.utils.annotation.ExcelColumn;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
+import org.springframework.data.domain.Persistable;
 
 import javax.persistence.*;
+
+import static dev.excel.utils.connection.ConnectionConst.JPA_TABLE;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "data_jpa_1")
-public class SampleVO {
+@Table(name = JPA_TABLE)
+public class SampleVO implements Persistable<Long> {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO, generator="native")
-    @GenericGenerator(name = "native", strategy = "native")
+//    @GeneratedValue(strategy= GenerationType.IDENTITY, generator="native")
+//    @GenericGenerator(name = "native", strategy = "native")
+//    @Column(name = "id", updatable = false)
     private Long id;
 
     @ExcelColumn(headerName = "유저아이디", dbFieldName = "user_id")
@@ -95,4 +98,9 @@ public class SampleVO {
     @ExcelColumn(headerName = "샘플24", dbFieldName = "sample24")
     private String sample24;
 
+
+    @Override
+    public boolean isNew() {
+        return true;
+    }
 }

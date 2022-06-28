@@ -20,10 +20,6 @@ public final class SheetExcelFile<T> extends SXSSFExcelFile<T>{
         if (data.isEmpty()) return;
 
         // 2. Render Body
-//        for (Object renderedData : data) {
-//            renderBody(renderedData, currentRowIndex++, COLUMN_START_INDEX);
-//        }
-
         Iterator<T> iterator = data.iterator();
         while (iterator.hasNext()) {
             T renderedData = iterator.next();

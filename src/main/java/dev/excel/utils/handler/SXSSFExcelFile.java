@@ -23,7 +23,9 @@ public abstract class SXSSFExcelFile<T> implements ExcelFile<T> {
     protected Sheet sheet;
     protected ExcelRenderResource resource;
 
-    public SXSSFExcelFile(Class<T> type) { this(Collections.emptyList(), type);}
+    public SXSSFExcelFile(Class<T> type) {
+        this(Collections.emptyList(), type);
+    }
 
     public SXSSFExcelFile(List<T> data, Class<T> type) {
         validateDate(data);
@@ -32,7 +34,8 @@ public abstract class SXSSFExcelFile<T> implements ExcelFile<T> {
         renderExcel(data);
     }
 
-    protected void validateDate(List<T> data) {}
+    protected void validateDate(List<T> data) {
+    }
 
     protected abstract void renderExcel(List<T> data);
 
@@ -51,15 +54,17 @@ public abstract class SXSSFExcelFile<T> implements ExcelFile<T> {
 
         for (String dataFieldName : resource.getDataFieldNames()) {
             Cell cell = row.createCell(columnIndex++);
+            Field field = getField(data.getClass(), dataFieldName);
+            field.setAccessible(true);
+            Object cellValue = null;
+
             try {
-                    Field field = getField(data.getClass(), dataFieldName);
-                    field.setAccessible(true);
-                    Object cellValue = field.get(data);
-                    renderCellValue(cell, cellValue);
-            } catch (Exception e) {
-//                throw new ExcelInternalException(e.getMessage(), e);
-                log.info("RENDER BODY ERROR => {}", e);
+                cellValue = field.get(data);
+            } catch (IllegalAccessException e) {
+                log.error("IllegalAccessException", e);
             }
+
+            renderCellValue(cell, cellValue);
         }
     }
 
@@ -76,10 +81,13 @@ public abstract class SXSSFExcelFile<T> implements ExcelFile<T> {
      * 엑셀 Sheet write 메소드
      */
     @Override
-    public void write(OutputStream stream) throws IOException {
-        wb.write(stream);
-        wb.close();
-        wb.dispose();
+    public void write(OutputStream stream) {
+        try {
+            wb.write(stream);
+            wb.close();
+            wb.dispose();
+        } catch (IOException e) {
+            log.error("[excel write] IOException {}", e);
+        }
     }
-
 }

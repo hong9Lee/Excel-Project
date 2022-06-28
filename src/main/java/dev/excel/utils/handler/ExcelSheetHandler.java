@@ -13,7 +13,6 @@ import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler.SheetContentsHandler;
 import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.usermodel.XSSFComment;
-import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
@@ -27,30 +26,21 @@ public class ExcelSheetHandler implements SheetContentsHandler{
     private List<String> row = new ArrayList<>();
     private List<String> header = new ArrayList<>();
 
-    public static ExcelSheetHandler readExcel(MultipartFile file) {
+    public static ExcelSheetHandler readExcel(String path) {
 
         ExcelSheetHandler sheetHandler = new ExcelSheetHandler();
         try{
-            //org.apache.poi.openxml4j.opc.OPCPackage
-            OPCPackage opc = OPCPackage.open(file.getInputStream());
-
-            //org.apache.poi.xssf.eventusermodel.XSSFReader
+            OPCPackage opc = OPCPackage.open(path);
             XSSFReader xssfReader = new XSSFReader(opc);
-
-            //org.apache.poi.xssf.model.StylesTable
             StylesTable styles = xssfReader.getStylesTable();
 
-            //org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable
             ReadOnlySharedStringsTable strings = new ReadOnlySharedStringsTable(opc);
 
             // 엑셀의 시트를 하나만 가져오기
-            // 여러개일경우 while문으로 추출 필요
             InputStream inputStream = xssfReader.getSheetsData().next();
 
-            // org.xml.sax.InputSource
             InputSource inputSource = new InputSource(inputStream);
 
-            // org.xml.sax.Contenthandler
             ContentHandler handle = new XSSFSheetXMLHandler(styles, strings, sheetHandler, false);
 
             XMLReader xmlReader = SAXHelper.newXMLReader();
@@ -64,7 +54,7 @@ public class ExcelSheetHandler implements SheetContentsHandler{
             throw new IllegalStateException();
         }
         return sheetHandler;
-    }//readExcel - end
+    }
 
     public List<List<String>> getRows(){
         return rows;

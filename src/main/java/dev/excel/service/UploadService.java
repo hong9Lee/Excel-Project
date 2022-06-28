@@ -1,46 +1,53 @@
 package dev.excel.service;
 
-import dev.excel.dto.SampleVO;
 import dev.excel.repository.DataJpaRepository;
 import dev.excel.repository.JdbcRepository;
 import dev.excel.repository.MybatisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 import static dev.excel.utils.DataUtils.getClazzDataList;
+import static dev.excel.utils.DataUtils.split;
+import static dev.excel.utils.connection.ConnectionConst.MYBATIS_UPLOAD_SPLIT_SIZE;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class UploadService { // jdbc, mybatis, jpa
+public class UploadService {
 
     private final MybatisRepository mybatisRepository;
     private final DataJpaRepository jpaRepository;
     private final JdbcRepository jdbcRepository;
 
     @Transactional
-    public long excelUploadJdbcByBulkApi(MultipartFile uploadFile) {
+    public long excelUploadJdbcByBulkApi(String path, Class<?> clazz) { // JDBC
         long start = System.currentTimeMillis();
 
-        String tableNm = "sample_data2";
-        jdbcRepository.insertClazzData(uploadFile, tableNm, SampleVO.class);
+        jdbcRepository.insertClazzData(path, clazz);
 
         long end = System.currentTimeMillis();
         long executeTime = (end - start) / 1000;
         System.out.println("실행시간(m) : " + executeTime);
         return executeTime;
     }
-
 
     @Transactional
-    public long excelInsertByMybatis(MultipartFile uploadFile) {
+    public long excelInsertByMybatis(String path, Class<?> clazz) { // MyBatis
+
         long start = System.currentTimeMillis();
 
-        mybatisRepository.insertData(getClazzDataList(uploadFile, SampleVO.class));
+        mybatisRepository.deleteAll();
+        List<T> clazzDataList = getClazzDataList(path, clazz);
+        List<List<T>> split = split(clazzDataList, MYBATIS_UPLOAD_SPLIT_SIZE);
+
+        for (int j = 0; j < split.size(); j++) {
+            mybatisRepository.insertData(split.get(j));
+        }
 
         long end = System.currentTimeMillis();
         long executeTime = (end - start) / 1000;
@@ -48,14 +55,12 @@ public class UploadService { // jdbc, mybatis, jpa
         return executeTime;
     }
 
-    public long excelUploadJpa(MultipartFile uploadFile) {
+    public long excelUploadJpa(String path, Class<?> clazz) { // JPA
         log.info("EXCEL UPLOAD BY [JPA]");
         long start = System.currentTimeMillis();
 
-        List<Object> clazzDataList = getClazzDataList(uploadFile, SampleVO.class);
-        List<SampleVO> dataList = (List<SampleVO>) (List<?>) clazzDataList;
-
-        jpaRepository.saveAll(dataList);
+        jpaRepository.deleteAllInBatch();
+        jpaRepository.saveAll(getClazzDataList(path, clazz));
 
         long end = System.currentTimeMillis();
         long executeTime = (end - start) / 1000;
@@ -63,8 +68,4 @@ public class UploadService { // jdbc, mybatis, jpa
         return executeTime;
     }
 
-    @Transactional
-    public void deleteAll() {
-        mybatisRepository.deleteAll();
-    }
 }

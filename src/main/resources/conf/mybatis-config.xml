@@ -7,6 +7,10 @@
         <setting name="callSettersOnNulls" value="true"/>
         <setting name="jdbcTypeForNull" value="NULL"/>
     </settings>
+
+    <typeAliases>
+        <typeAlias type="dev.excel.dto.SampleVO" alias="SampleVO"/>
+    </typeAliases>
 </configuration>
 
 

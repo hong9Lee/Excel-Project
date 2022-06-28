@@ -5,11 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.io.IOUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
+import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.*;
@@ -25,6 +27,9 @@ import static dev.excel.utils.resource.ExcelRenderResourceFactory.getDbField;
 
 @Slf4j
 public class DataUtils {
+
+    public static String SIMPLE_DATE_FORMAT = "yyyyMMddHHmmssSSS";
+    public static String YM_DATE_FORMAT = "yyyyMM";
 
     /**
      * 지정한 Count만큼 List split
@@ -61,33 +66,71 @@ public class DataUtils {
     }
 
     /**
+     * get upload file directory path
+     */
+    public static String getUploadDirectoryPath() {
+        return System.getProperty("user.dir").replaceAll("\\\\", "/") + "/upload/";
+    }
+
+    /**
+     * 임시 파일 삭제
+     */
+    public static void removeTempUploadFiles(String path) {
+        File deleteFolder = new File(path);
+
+        if (deleteFolder.exists()) {
+            File[] deleteFolderList = deleteFolder.listFiles();
+
+            for (int i = 0; i < deleteFolderList.length; i++) {
+                if (deleteFolderList[i].isFile()) {
+                    deleteFolderList[i].delete();
+                } else {
+                    removeTempUploadFiles(deleteFolderList[i].getPath());
+                }
+                deleteFolderList[i].delete();
+            }
+            deleteFolder.delete();
+        }
+    }
+
+    /**
      * MultipartFile 형태의 Input 엑셀파일을 Parsing 하여 List<List<String>>로 반환
      */
-    public static List<List<String>> getExcelParsingData(MultipartFile uploadFile) {
+    public static List<List<String>> getExcelParsingData(String path) {
         ExcelSheetHandler excelSheetHandler = new ExcelSheetHandler();
-        ExcelSheetHandler handler = excelSheetHandler.readExcel(uploadFile);
+        ExcelSheetHandler handler = excelSheetHandler.readExcel(path);
         List<List<String>> excelData = handler.getRows();
         return excelData;
     }
 
-    public static List<Object> getClazzDataList(MultipartFile uploadFile, Class<?> clazz) {
-        List<List<String>> excelData = getExcelParsingData(uploadFile);
+    /**
+     * Excel 파일을 Parsing 하여 Class<?> clazz형의 List<Object>로 변환
+     */
+    public static <T> List<T> getClazzDataList(String path, Class<?> clazz) {
+        List<List<String>> excelData = getExcelParsingData(path); // OOM 확인필요.
+
         log.info("GET DATA LIST SIZE ==> " + excelData.size());
 
         try {
             Class<?> inst = Class.forName(clazz.getName());
             Field[] declaredFields = clazz.getDeclaredFields();
+            List<T> list = new ArrayList<>();
 
-            List<Object> list = new ArrayList<>();
-            for (List<String> data : excelData) {
+            for (int k = 0; k < excelData.size(); k++) {
                 Object obj = inst.newInstance();
 
-                for (int i = 0; i < data.size(); i++) {
+                for (int i = 0; i < excelData.get(k).size(); i++) {
+                    if (i == 0) {
+                        Field declaredField = declaredFields[0];
+                        declaredField.setAccessible(true);
+                        declaredField.set(obj, Long.valueOf(k));
+                    }
                     Field declaredField = declaredFields[i + 1];
                     declaredField.setAccessible(true);
-                    declaredField.set(obj, data.get(i));
+                    declaredField.set(obj, excelData.get(k).get(i));
                 }
-                list.add(obj);
+                list.add((T) obj);
+
             }
             return list;
         } catch (ClassNotFoundException e) {
@@ -100,6 +143,9 @@ public class DataUtils {
         return Collections.emptyList();
     }
 
+    /**
+     * Object to Map
+     */
     public static Map<String, Object> beanProperties(final Object bean) {
         final Map<String, Object> result = new HashMap<>();
 
@@ -111,24 +157,27 @@ public class DataUtils {
                     result.put(propertyDescriptor.getName(), readMethod.invoke(bean, (Object[]) null));
                 }
             }
-        } catch (Exception ex) {
-            // ignore
+        } catch (InvocationTargetException e) {
+            log.error("InvocationTargetException", e);
+        } catch (IllegalAccessException e) {
+            log.error("IllegalAccessException", e);
+        } catch (IntrospectionException e) {
+            log.error("IntrospectionException", e);
         }
         return result;
     }
-
 
     /**
      * JDBC를 이용하여 데이터 Insert 쿼리를 묶기위해 전처리하는 메소드
      * ex) insert into TABLE_NAME (column1, colum2) VALUES (1, A), (2, B), (3, C) ,,,;
      */
-    public static String getAppendQueryByObj(List<Object> dataList) {
+    public static String getAppendQueryByObj (List<T> dataList, Class<?> clazz) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < dataList.size(); i++) {
             sb.append("(");
+
             Map<String, Object> valueMap = beanProperties(dataList.get(i));
-            Class<?> clazz = dataList.get(i).getClass();
             Field[] fields = clazz.getDeclaredFields();
 
             for (int j = 0; j < fields.length; j++) {
@@ -138,7 +187,7 @@ public class DataUtils {
                     if (j != fields.length - 1) sb.append(",");
                 }
             }
-            if(i != dataList.size() - 1) sb.append("),");
+            if (i != dataList.size() - 1) sb.append("),");
         }
         sb.append(")");
         return sb.toString();
@@ -153,14 +202,9 @@ public class DataUtils {
 
         try {
             fileItem = new DiskFileItem("mainFile", Files.probeContentType(file.toPath()), false, file.getName(), (int) file.length(), file.getParentFile());
-
-            InputStream input = new FileInputStream(file);
-            OutputStream os = fileItem.getOutputStream();
-            IOUtils.copy(input, os);
-            // Or faster..
-            // IOUtils.copy(new FileInputStream(file), fileItem.getOutputStream());
-        } catch (IOException ex) {
-            // do something.
+            IOUtils.copy(new FileInputStream(file), fileItem.getOutputStream());
+        } catch (IOException e) {
+            log.error("IOException", e);
         }
         return new CommonsMultipartFile(fileItem);
     }
@@ -175,42 +219,55 @@ public class DataUtils {
         return modelAndView;
     }
 
-    public static List<Object> ResultSetToObj (ResultSet rs, Class<?> clazz) throws SQLException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    /**
+     * [JDBC] ResultSet -> List<Object> 변환
+     */
+    public static <T> List<T> resultSetToObj(ResultSet rs, Class<?> clazz) {
         List<Field> fields = Arrays.asList(clazz.getDeclaredFields());
-        for(Field field: fields) {
+        for (Field field : fields) {
             field.setAccessible(true);
         }
 
-        List<Object> list = new ArrayList<>();
-        while(rs.next()) {
-            Object dto = clazz.getConstructor().newInstance();
+        List<T> list = new ArrayList<>();
+        try {
+            while (rs.next()) {
+                Object dto = clazz.getConstructor().newInstance();
 
-            for(Field field: fields) {
-                String name = getDbField(field);
+                for (Field field : fields) {
+                    String name = getDbField(field);
 
-                try{
-                    if(!"id".equals(name) && name != "") {
+                    if (!"id".equals(name) && name != "") {
                         if (isThere(rs, name)) {
                             String value = rs.getString(name);
                             field.set(dto, field.getType().getConstructor(String.class).newInstance(value));
                         }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
+                list.add((T) dto);
             }
-            list.add(dto);
+        } catch (SQLException e) { //
+            log.error("SQLException", e);
+        } catch (InvocationTargetException e) { //
+            log.error("InvocationTargetException", e);
+        } catch (InstantiationException e) { // newInstance()로 객체를 생성할 수 없을 때 발생하는 exception
+            log.error("InstantiationException", e);
+        } catch (IllegalAccessException e) { //
+            log.error("IllegalAccessException", e);
+        } catch (NoSuchMethodException e) { // Method를 찾지 못할 때 발생
+            log.error("NoSuchMethodException", e);
         }
         return list;
     }
 
-    public static boolean isThere(ResultSet rs, String column)
-    {
+    /**
+     * [JDBC] ResultSet 에서 Column 존재 여부 확인
+     */
+    public static boolean isThere(ResultSet rs, String column) {
         try {
             rs.findColumn(column);
             return true;
-        } catch (SQLException sqlex) {
-            log.error("columns doesn't exist {}", column, sqlex);
+        } catch (SQLException e) {
+            log.error("columns doesn't exist {}", column, e);
         }
         return false;
     }
