@@ -34,8 +34,7 @@ public abstract class SXSSFExcelFile<T> implements ExcelFile<T> {
         renderExcel(data);
     }
 
-    protected void validateDate(List<T> data) {
-    }
+    protected void validateDate(List<T> data) {}
 
     protected abstract void renderExcel(List<T> data);
 
@@ -53,18 +52,15 @@ public abstract class SXSSFExcelFile<T> implements ExcelFile<T> {
         int columnIndex = columnStartIndex;
 
         for (String dataFieldName : resource.getDataFieldNames()) {
-            Cell cell = row.createCell(columnIndex++);
-            Field field = getField(data.getClass(), dataFieldName);
-            field.setAccessible(true);
-            Object cellValue = null;
-
             try {
-                cellValue = field.get(data);
+                Cell cell = row.createCell(columnIndex++);
+                Field field = getField(data.getClass(), dataFieldName);
+                field.setAccessible(true);
+                Object cellValue = field.get(data);
+                renderCellValue(cell, cellValue);
             } catch (IllegalAccessException e) {
                 log.error("IllegalAccessException", e);
             }
-
-            renderCellValue(cell, cellValue);
         }
     }
 

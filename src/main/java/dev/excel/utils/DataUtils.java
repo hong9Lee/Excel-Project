@@ -118,19 +118,14 @@ public class DataUtils {
 
             for (int k = 0; k < excelData.size(); k++) {
                 Object obj = inst.newInstance();
-
                 for (int i = 0; i < excelData.get(k).size(); i++) {
-                    if (i == 0) {
-                        Field declaredField = declaredFields[0];
-                        declaredField.setAccessible(true);
-                        declaredField.set(obj, Long.valueOf(k));
-                    }
-                    Field declaredField = declaredFields[i + 1];
+                    Field declaredField = declaredFields[i];
                     declaredField.setAccessible(true);
-                    declaredField.set(obj, excelData.get(k).get(i));
+
+                    if (i == 0) declaredField.set(obj, Long.valueOf(k));
+                    else declaredField.set(obj, excelData.get(k).get(i));
                 }
                 list.add((T) obj);
-
             }
             return list;
         } catch (ClassNotFoundException e) {
@@ -171,7 +166,7 @@ public class DataUtils {
      * JDBC를 이용하여 데이터 Insert 쿼리를 묶기위해 전처리하는 메소드
      * ex) insert into TABLE_NAME (column1, colum2) VALUES (1, A), (2, B), (3, C) ,,,;
      */
-    public static String getAppendQueryByObj (List<T> dataList, Class<?> clazz) {
+    public static String getAppendQueryByObj(List<T> dataList, Class<?> clazz) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < dataList.size(); i++) {

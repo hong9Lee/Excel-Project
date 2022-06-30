@@ -36,9 +36,8 @@ public class ExcelSheetHandler implements SheetContentsHandler{
 
             ReadOnlySharedStringsTable strings = new ReadOnlySharedStringsTable(opc);
 
-            // 엑셀의 시트를 하나만 가져오기
+            // Get Sheet
             InputStream inputStream = xssfReader.getSheetsData().next();
-
             InputSource inputSource = new InputSource(inputStream);
 
             ContentHandler handle = new XSSFSheetXMLHandler(styles, strings, sheetHandler, false);
@@ -49,7 +48,7 @@ public class ExcelSheetHandler implements SheetContentsHandler{
 
             inputStream.close();
             opc.close();
-        }catch(Exception e) { //에러 발생했을때 하시고 싶은 TO-DO
+        }catch(Exception e) {
             System.out.println(e);
             throw new IllegalStateException();
         }

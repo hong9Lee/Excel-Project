@@ -19,7 +19,7 @@ public class DownloadController {
     private final DownloadService downloadService;
 
     @GetMapping(value = "/download", produces = "application/text; charset=UTF-8")
-    public void excelDownload(HttpServletResponse response, @RequestParam("title") String title, Model model) {
+    public void excelDownload(HttpServletResponse response, @RequestParam("title") String title) {
 
         long start = System.currentTimeMillis();
         log.info("============= [DOWNLOAD START] =============");
@@ -32,7 +32,6 @@ public class DownloadController {
          * SET VO.class
          */
         Class<SampleVO> clazz = SampleVO.class;
-
 
         if (title.equals("jdbc")) {
             downloadService.excelDownloadJdbc(response, clazz);

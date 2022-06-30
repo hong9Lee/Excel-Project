@@ -1,7 +1,7 @@
 .mainDiv {
     border: 4px groove #337ab7;
     border-radius: 20px;
-    width: 650px;
+    width: 500px;
 }
 
 .sql_container span{
@@ -10,15 +10,19 @@
 .sql_name {
     display: inline-block;
     width: 60px;
-}
-
-.sub-btn {
     margin-left: 30px;
 }
 
+.sub-btn {
+    margin-left: 20px;
+    /*margin-right: 25px;*/
+    /*float: right;*/
+}
+
 .dwn-btn {
-    float: right;
-    margin-right: 165px;
+    /*float: right;*/
+    margin-left: 30px;
+    /*margin-right: 25px;*/
 }
 
 .innerDiv {
@@ -75,5 +79,5 @@ label {
 }
 
 #target_file_wrap span {
-    margin-left: 40px;
+    margin-left: 20px;
 }

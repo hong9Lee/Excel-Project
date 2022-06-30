@@ -27,27 +27,30 @@
 
             <div class="sql_container">
                 <span class="sql_name">JDBC</span>
+                <button type="button" name="down" value="jdbc" class="btn dwn-btn">DOWNLOAD</button>
                 <button class="btn sub-btn" type="button" name="title" value="jdbc">UPLOAD</button>
                 <span th:id="jdbcResult"></span>
-                <button type="button" name="down" value="jdbc" class="btn dwn-btn">DOWNLOAD</button>
+
             </div>
 
             </br>
 
             <div class="sql_container">
                 <span class="sql_name">MyBatis</span>
+                <button type="button" name="down" value="myBatis" class="btn dwn-btn">DOWNLOAD</button>
                 <button class="btn sub-btn" type="button" name="title" value="myBatis">UPLOAD</button>
                 <span th:id="myBatisResult"></span>
-                <button type="button" name="down" value="myBatis" class="btn dwn-btn">DOWNLOAD</button>
+
             </div>
             </br>
 
 
             <div class="sql_container">
                 <span class="sql_name">JPA</span>
+                <button type="button" name="down" value="jpa" class="btn dwn-btn">DOWNLOAD</button>
                 <button class="btn sub-btn" type="button" name="title" value="jpa">UPLOAD</button>
                 <span th:id="jpaResult"></span>
-                <button type="button" name="down" value="jpa" class="btn dwn-btn">DOWNLOAD</button>
+
             </div>
             </br>
 
@@ -135,8 +138,8 @@
 
             let name = file.name // 파일 이름
             let size = file.size;// 총합 크기
-            let shardSize = 1 * 1024 * 1024 // 슬라이스 1MB로
-            let shardCount = Math.ceil(size / shardSize);// 조각의 총 수
+            let shardSize = 10 * 1024 * 1024 // 파일 슬라이스 10MB
+            let shardCount = Math.ceil(size / shardSize);// 파일 슬라이스의 총 수
             for (let i = 0; i < shardCount; ++i) {
 
                 //시작과 끝 위치 각각에 대해 계산
@@ -144,6 +147,7 @@
                 let end = Math.min(size, start + shardSize);
                 let partFile = file.slice(start, end);
                 this.partUpload(GUID, partFile, name, shardCount, i);
+
             }
         },
 

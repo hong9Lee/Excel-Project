@@ -13,7 +13,7 @@ import java.util.List;
 
 import static dev.excel.utils.DataUtils.*;
 import static dev.excel.utils.SuperClassReflectionUtils.getStringQueryByAllFields;
-import static dev.excel.utils.connection.ConnectionConst.JDBC_TABLE;
+import static dev.excel.utils.connection.ConnectionConst.*;
 import static dev.excel.utils.connection.DBConnectionUtil.*;
 import static dev.excel.utils.connection.DBConnectionUtil.getConnectionByBulkApi;
 
@@ -40,7 +40,7 @@ public class JdbcRepository {
 
         List<T> dataList = getClazzDataList(path, clazz);
 
-        List<List<T>> ret = split(dataList, 2000);
+        List<List<T>> ret = split(dataList, JDBC_UPLOAD_SPLIT_SIZE);
         String fieldStr = getStringQueryByAllFields(clazz);
 
         for (int j = 0; j < ret.size(); j++) {
@@ -108,7 +108,7 @@ public class JdbcRepository {
             con = getConnectionByBulkApi();
             pstmt = con.prepareStatement(sql);
             rs = pstmt.executeQuery();
-            pstmt.setFetchSize(500);
+            pstmt.setFetchSize(JDBC_SELECT_FETCH_SIZE);
 
             List<T> result = resultSetToObj(rs, clazz);
             return result;

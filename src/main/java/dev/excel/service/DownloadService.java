@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 
-import static dev.excel.utils.connection.ConnectionConst.JDBC_DOWNLOAD_SPLIT_SIZE;
+import static dev.excel.utils.connection.ConnectionConst.JDBC_DOWNLOAD_LIMIT_SIZE;
 import static dev.excel.utils.connection.ConnectionConst.JDBC_TABLE;
 
 @Service
@@ -30,7 +30,7 @@ public class DownloadService {
      */
     public void excelDownloadJdbc(HttpServletResponse response, Class<?> clazz) {
         String tableNm = JDBC_TABLE;
-        int splitSize = JDBC_DOWNLOAD_SPLIT_SIZE;
+        int splitSize = JDBC_DOWNLOAD_LIMIT_SIZE;
 
         SheetExcelFile<T> excelFile = new SheetExcelFile(clazz);
         int jdbcDataSize = jdbcRepository.getDataSize(tableNm);
@@ -40,6 +40,7 @@ public class DownloadService {
             List<T> dataInfo = jdbcRepository.getDataInfo(i, splitSize, tableNm, clazz);
             excelFile.addRows(dataInfo);
         }
+
         excelWrite(excelFile, response);
     }
 
@@ -63,9 +64,7 @@ public class DownloadService {
         excelWrite(excelFile, response);
     }
 
-    public <T> List<T> getMyBatisDataInfo() {
-        return mybatisRepository.findAll();
-    }
+    public <T> List<T> getMyBatisDataInfo() { return mybatisRepository.findAll(); }
 
     public <T> List<T> getJpaDataInfo() {
         return (List<T>) jpaRepository.findAll();
