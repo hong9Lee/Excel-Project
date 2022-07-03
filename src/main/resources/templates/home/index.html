@@ -201,7 +201,7 @@
                                 if (response.jpa !== undefined) $("#jpaResult").text("수행시간 : " + response.jpa + "(s)");
                             },
                             error   : function (jqXHR){
-                                alert(jqXHR);
+                                alert(JSON.stringify(jqXHR));
                                 return;
                             }
                         });

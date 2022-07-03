@@ -1,13 +1,9 @@
 package dev.excel.utils;
 
+import dev.excel.utils.exception.DataConversionException;
 import dev.excel.utils.handler.ExcelSheetHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.disk.DiskFileItem;
-import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.formula.functions.T;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
@@ -18,7 +14,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -107,7 +103,7 @@ public class DataUtils {
      * Excel 파일을 Parsing 하여 Class<?> clazz형의 List<Object>로 변환
      */
     public static <T> List<T> getClazzDataList(String path, Class<?> clazz) {
-        List<List<String>> excelData = getExcelParsingData(path); // OOM 확인필요.
+        List<List<String>> excelData = getExcelParsingData(path);
 
         log.info("GET DATA LIST SIZE ==> " + excelData.size());
 
@@ -122,20 +118,16 @@ public class DataUtils {
                     Field declaredField = declaredFields[i];
                     declaredField.setAccessible(true);
 
-                    if (i == 0) declaredField.set(obj, Long.valueOf(k));
+                    if (i == 0) declaredField.set(obj, Long.valueOf(k) + 1);
                     else declaredField.set(obj, excelData.get(k).get(i));
                 }
                 list.add((T) obj);
             }
+
             return list;
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new DataConversionException("getClazzDataList error", e);
         }
-        return Collections.emptyList();
     }
 
     /**
@@ -152,14 +144,32 @@ public class DataUtils {
                     result.put(propertyDescriptor.getName(), readMethod.invoke(bean, (Object[]) null));
                 }
             }
-        } catch (InvocationTargetException e) {
-            log.error("InvocationTargetException", e);
-        } catch (IllegalAccessException e) {
-            log.error("IllegalAccessException", e);
-        } catch (IntrospectionException e) {
-            log.error("IntrospectionException", e);
+        } catch (Exception e) {
+            throw new DataConversionException("beanProperties error", e);
         }
         return result;
+    }
+
+    /**
+     * PreparedStatement.setValue
+     */
+    public static PreparedStatement setPreparedStatement(Object data, Class<?> clazz, PreparedStatement pstmt) throws SQLException {
+            Map<String, Object> valueMap = beanProperties(data);
+            Field[] fields = clazz.getDeclaredFields();
+
+            for (int j = 0; j < fields.length; j++) {
+                String name = fields[j].getName();
+
+                if(name == "id") {
+                    long id = (long) valueMap.get(name);
+                    pstmt.setInt(j + 1, (int) id);
+                    continue;
+                }
+
+                pstmt.setString(j + 1, (String) valueMap.get(name));
+            }
+
+        return pstmt;
     }
 
     /**
@@ -177,31 +187,13 @@ public class DataUtils {
 
             for (int j = 0; j < fields.length; j++) {
                 String name = fields[j].getName();
-                if (!name.equals("id")) {
                     sb.append("\'" + valueMap.get(name) + "\'");
                     if (j != fields.length - 1) sb.append(",");
-                }
             }
             if (i != dataList.size() - 1) sb.append("),");
         }
         sb.append(")");
         return sb.toString();
-    }
-
-    /**
-     * Upload File을 MultipartFile로 반환
-     */
-    public static MultipartFile getUploadFile(String path) {
-        File file = new File(path);
-        FileItem fileItem = null;
-
-        try {
-            fileItem = new DiskFileItem("mainFile", Files.probeContentType(file.toPath()), false, file.getName(), (int) file.length(), file.getParentFile());
-            IOUtils.copy(new FileInputStream(file), fileItem.getOutputStream());
-        } catch (IOException e) {
-            log.error("IOException", e);
-        }
-        return new CommonsMultipartFile(fileItem);
     }
 
     /**
@@ -231,25 +223,17 @@ public class DataUtils {
                 for (Field field : fields) {
                     String name = getDbField(field);
 
-                    if (!"id".equals(name) && name != "") {
+//                    if (!"id".equals(name) && name != "") {
                         if (isThere(rs, name)) {
                             String value = rs.getString(name);
                             field.set(dto, field.getType().getConstructor(String.class).newInstance(value));
                         }
-                    }
+//                    }
                 }
                 list.add((T) dto);
             }
-        } catch (SQLException e) { //
-            log.error("SQLException", e);
-        } catch (InvocationTargetException e) { //
-            log.error("InvocationTargetException", e);
-        } catch (InstantiationException e) { // newInstance()로 객체를 생성할 수 없을 때 발생하는 exception
-            log.error("InstantiationException", e);
-        } catch (IllegalAccessException e) { //
-            log.error("IllegalAccessException", e);
-        } catch (NoSuchMethodException e) { // Method를 찾지 못할 때 발생
-            log.error("NoSuchMethodException", e);
+        } catch (Exception e) {
+            throw new DataConversionException("resultSetToObj error", e);
         }
         return list;
     }
@@ -261,9 +245,14 @@ public class DataUtils {
         try {
             rs.findColumn(column);
             return true;
-        } catch (SQLException e) {
-            log.error("columns doesn't exist {}", column, e);
+        } catch (Exception e) {
+            throw new DataConversionException("[isThere] columns doesn't exist error", e);
         }
-        return false;
+    }
+
+
+    public static String executeTime(double start, double end) {
+        double executeTime = (end - start) / 1000;
+        return String.format("%.2f", Math.round(executeTime * 100) / 100.0);
     }
 }

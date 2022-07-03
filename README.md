@@ -127,11 +127,39 @@ excelWrite(excelFile, response);
 
 
 
-## 3. 다양한 데이터 접근 기술을 적용하여 테스트
+## 3. Web 페이지를 통해 기능 테스트
+![main_img](https://user-images.githubusercontent.com/94272140/176992766-3c30555e-e3d6-4f3b-9162-c16f6ef87864.png)
 
 
 
 
 
 ## 4. 성능
+#### &nbsp; 4.1 rows * 24column 테스트 진행
+
+[DOWNLOAD]
+|rows|JDBC|MyBatis|JPA
+|------|---|---|--|
+|100|0.08s|0.04s|0.08s
+|1000|0.25s|0.13s|0.15s
+|10000|1.54s|1.06s|1.17s
+|100000|13.36s|9.53s|10.07s
+
+[UPLOAD]
+|rows|JDBC|MyBatis|JPA
+|------|---|---|--|
+|100|0.1s|0.08s|0.04s
+|1000|0.78s|0.48s|0.27s
+|10000|7.24s|3.92s|2.55s
+|100000|71.43s|40.20s|24.43s
+
+#### &nbsp; 4.2 MultiRow Bulk Insert 방식으로 성능 개선 ( 10000 row 테스트 )
+
+
+||execute|Batch|
+|------|---|---|
+|JDBC|20.78s|7.24s
+|MyBatis|7.78s|3.92s
+|JPA|5.72s|2.55s
+
 

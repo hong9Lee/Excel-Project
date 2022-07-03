@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import dev.excel.utils.exception.ExcelHandlingException;
 import org.apache.poi.ooxml.util.SAXHelper;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.util.CellReference;
@@ -20,7 +21,6 @@ import org.xml.sax.XMLReader;
 public class ExcelSheetHandler implements SheetContentsHandler{
     private int currentCol = -1;
     private int currRowNum = 0;
-    String filePath = "";
 
     private List<List<String>> rows = new ArrayList<>();    //실제 엑셀을 파싱해서 담아지는 데이터
     private List<String> row = new ArrayList<>();
@@ -49,8 +49,7 @@ public class ExcelSheetHandler implements SheetContentsHandler{
             inputStream.close();
             opc.close();
         }catch(Exception e) {
-            System.out.println(e);
-            throw new IllegalStateException();
+            throw new ExcelHandlingException("readExcel error", e);
         }
         return sheetHandler;
     }

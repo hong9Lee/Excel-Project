@@ -1,5 +1,7 @@
 package dev.excel.utils.handler;
 
+import dev.excel.utils.exception.ExcelHandlingException;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,8 +33,7 @@ public final class SheetExcelFile<T> extends SXSSFExcelFile<T>{
     protected void validateDate(List<T> data) {
         int maxRows = supplyExcelVersion.getMaxRows();
         if (data.size() > maxRows) {
-            throw new IllegalArgumentException(
-                    String.format("This concrete ExcelFile does not support over %s rows", maxRows));
+            throw new ExcelHandlingException(String.format("This concrete ExcelFile does not support over %s rows", maxRows));
         }
     }
 

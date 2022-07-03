@@ -1,5 +1,7 @@
 package dev.excel.utils.handler;
 
+import dev.excel.utils.exception.DataConversionException;
+import dev.excel.utils.exception.ExcelHandlingException;
 import dev.excel.utils.resource.ExcelRenderResourceFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.SpreadsheetVersion;
@@ -59,7 +61,7 @@ public abstract class SXSSFExcelFile<T> implements ExcelFile<T> {
                 Object cellValue = field.get(data);
                 renderCellValue(cell, cellValue);
             } catch (IllegalAccessException e) {
-                log.error("IllegalAccessException", e);
+                throw new ExcelHandlingException("renderBody error", e);
             }
         }
     }
@@ -83,7 +85,7 @@ public abstract class SXSSFExcelFile<T> implements ExcelFile<T> {
             wb.close();
             wb.dispose();
         } catch (IOException e) {
-            log.error("[excel write] IOException {}", e);
+            throw new ExcelHandlingException("Excel write error", e);
         }
     }
 }

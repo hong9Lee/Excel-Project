@@ -1,5 +1,6 @@
 package dev.excel.utils;
 
+import dev.excel.utils.exception.DataConversionException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.*;
@@ -21,7 +22,7 @@ public class SuperClassReflectionUtils {
                     try {
                         return clazzInClasses.getDeclaredField(name);
                     } catch (NoSuchFieldException e) {
-                        log.error("NoSuchFieldException", e);
+                        throw new DataConversionException("getField error", e);
                     }
                 }
             }

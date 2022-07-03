@@ -1,15 +1,23 @@
 package dev.excel.service;
 
+import dev.excel.dto.SampleVO;
 import dev.excel.repository.DataJpaRepository;
 import dev.excel.repository.JdbcRepository;
 import dev.excel.repository.MybatisRepository;
+import dev.excel.utils.exception.ExcelHandlingException;
 import dev.excel.utils.handler.SheetExcelFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
+import java.awt.print.Pageable;
 import java.io.IOException;
 import java.util.*;
 
@@ -66,9 +74,7 @@ public class DownloadService {
 
     public <T> List<T> getMyBatisDataInfo() { return mybatisRepository.findAll(); }
 
-    public <T> List<T> getJpaDataInfo() {
-        return (List<T>) jpaRepository.findAll();
-    }
+    public <T> List<T> getJpaDataInfo() { return (List<T>) jpaRepository.findAll(); }
 
     /**
      * excel write
@@ -77,8 +83,7 @@ public class DownloadService {
         try {
             excelFile.write(response.getOutputStream());
         } catch (IOException e) {
-            log.error("IOException", e);
-            e.printStackTrace();
+            throw new ExcelHandlingException("excelWrite error", e);
         }
     }
 }

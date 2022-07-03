@@ -1,5 +1,6 @@
 package dev.excel.utils.connection;
 
+import dev.excel.utils.exception.DataSqlException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -31,16 +32,4 @@ public class DBConnectionUtil {
         DataSourceUtils.releaseConnection(con, dataSource);
         log.info("CLOSE connection={}, class={}", con, con.getClass());
     }
-
-
-    public static Connection getConnectionByBulkApi() {
-        try {
-            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/excel_data?user=root&password=102030&useBulkCopyForBatchInsert=true;");
-            log.info("get connection={}, class={}", connection, connection.getClass());
-            return connection;
-        } catch (SQLException e) {
-            throw new IllegalStateException();
-        }
-    }
-
 }

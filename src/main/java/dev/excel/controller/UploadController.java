@@ -72,7 +72,6 @@ public class UploadController {
                 FileUtils.copyInputStreamToFile(file.getInputStream(), tempPartFile);
             }
         } catch (IOException e) {
-            log.error("IOException", e);
             return Result.failMessage(400, e.getMessage());
         }
         return Result.successMessage(200, "", "");
@@ -98,11 +97,7 @@ public class UploadController {
 
                 if (!destTempFile.exists()) { //상위 디렉토리의 파일을 얻고, 부모 디렉토리를 만들려면 파일을 생성
                     destTempFile.getParentFile().mkdir();
-                    try {
-                        destTempFile.createNewFile();
-                    } catch (IOException e) {
-                        log.error("IOException", e);
-                    }
+                    destTempFile.createNewFile();
                 }
 
                 log.info("Chunk Size => {}", parentFileDir.listFiles().length);
@@ -117,14 +112,10 @@ public class UploadController {
                 FileUtils.deleteDirectory(parentFileDir); // chunk 임시 디렉토리 삭제
                 return Result.successMessage(200, "success", destTempFile.getPath());
             } else {
-                return Result.failMessage(400, "merge error");
+                return Result.failMessage(400, "File merge error");
             }
-        } catch (FileNotFoundException e) {
-            log.error("FileNotFoundException", e);
-        } catch (IOException e) {
-            log.error("IOException", e);
+        } catch (Exception e) {
+            return Result.failMessage(400, "mergeFile error");
         }
-
-        return Result.failMessage(400, "mergeFile error");
     }
 }

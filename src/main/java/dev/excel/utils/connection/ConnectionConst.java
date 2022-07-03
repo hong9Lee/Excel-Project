@@ -9,18 +9,19 @@ public abstract class ConnectionConst {
     public static final String MYBATIS_TABLE = "data_mybatis_1";
     public static final String JPA_TABLE = "data_jpa_1";
 
-    public static final int JDBC_SELECT_FETCH_SIZE = 500;
-
     /**
      * Paging 쿼리 Limit size
      * select * from TABLE LIMIT [JDBC_DOWNLOAD_LIMIT_SIZE] OFFSET 14000;
      */
-    public static final int JDBC_DOWNLOAD_LIMIT_SIZE = 5000;
+    public static final int JDBC_DOWNLOAD_LIMIT_SIZE = 8000;
+
+    public static final int JDBC_SELECT_FETCH_SIZE = 500;
+
 
     /**
      * Excel Data를 나누어 Insert하기 위해 Size 설정
      */
-    public static final int JDBC_UPLOAD_SPLIT_SIZE = 2000;
+    public static final int JDBC_UPLOAD_SPLIT_SIZE = 10000;
     public static final int MYBATIS_UPLOAD_SPLIT_SIZE = 500;
 
 }

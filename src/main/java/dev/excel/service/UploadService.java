@@ -11,8 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static dev.excel.utils.DataUtils.getClazzDataList;
-import static dev.excel.utils.DataUtils.split;
+import static dev.excel.utils.DataUtils.*;
 import static dev.excel.utils.connection.ConnectionConst.MYBATIS_UPLOAD_SPLIT_SIZE;
 
 @Service
@@ -25,20 +24,20 @@ public class UploadService {
     private final JdbcRepository jdbcRepository;
 
     @Transactional
-    public long excelUploadJdbcByBulkApi(String path, Class<?> clazz) { // JDBC
+    public String excelUploadJdbcByBulkApi(String path, Class<?> clazz) { // JDBC
+        log.info("EXCEL UPLOAD BY [JDBC]");
         long start = System.currentTimeMillis();
 
-        jdbcRepository.insertClazzData(path, clazz);
+        jdbcRepository.insertMultiRowData(path, clazz);
+//        jdbcRepository.insertBatchData(path, clazz);
 
         long end = System.currentTimeMillis();
-        long executeTime = (end - start) / 1000;
-        System.out.println("실행시간(m) : " + executeTime);
-        return executeTime;
+        return executeTime(start, end);
     }
 
     @Transactional
-    public long excelInsertByMybatis(String path, Class<?> clazz) { // MyBatis
-
+    public String excelInsertByMybatis(String path, Class<?> clazz) { // MyBatis
+        log.info("EXCEL UPLOAD BY [MYBATIS]");
         long start = System.currentTimeMillis();
 
         mybatisRepository.deleteAll();
@@ -50,12 +49,10 @@ public class UploadService {
         }
 
         long end = System.currentTimeMillis();
-        long executeTime = (end - start) / 1000;
-        System.out.println("실행시간(m) : " + executeTime);
-        return executeTime;
+        return executeTime(start, end);
     }
 
-    public long excelUploadJpa(String path, Class<?> clazz) { // JPA
+    public String excelUploadJpa(String path, Class<?> clazz) { // JPA
         log.info("EXCEL UPLOAD BY [JPA]");
         long start = System.currentTimeMillis();
 
@@ -63,9 +60,7 @@ public class UploadService {
         jpaRepository.saveAll(getClazzDataList(path, clazz));
 
         long end = System.currentTimeMillis();
-        long executeTime = (end - start) / 1000;
-        System.out.println("실행시간(m) : " + executeTime);
-        return executeTime;
+        return executeTime(start, end);
     }
 
 }

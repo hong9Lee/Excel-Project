@@ -21,6 +21,7 @@ public class SampleVO implements Persistable<Long> {
 //    @GeneratedValue(strategy= GenerationType.IDENTITY, generator="native")
 //    @GenericGenerator(name = "native", strategy = "native")
 //    @Column(name = "id", updatable = false)
+    @ExcelColumn(headerName = "id", dbFieldName = "id")
     private Long id;
 
     @ExcelColumn(headerName = "유저아이디", dbFieldName = "user_id")

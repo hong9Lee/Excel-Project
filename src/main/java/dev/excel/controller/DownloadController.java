@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
 
+import static dev.excel.utils.DataUtils.executeTime;
+
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -20,10 +22,8 @@ public class DownloadController {
 
     @GetMapping(value = "/download", produces = "application/text; charset=UTF-8")
     public void excelDownload(HttpServletResponse response, @RequestParam("title") String title) {
-
         long start = System.currentTimeMillis();
         log.info("============= [DOWNLOAD START] =============");
-        log.info("TITLE => {}", title);
 
         response.setHeader("Set-Cookie", "fileDownload=true; path=/");
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -42,7 +42,6 @@ public class DownloadController {
         }
 
         long end = System.currentTimeMillis();
-        long executeTime = (end - start) / 1000;
-        System.out.println("실행시간(m) : " + executeTime);
+        log.info("EXECUTE TIME => {}(s)", executeTime(start, end));
     }
 }

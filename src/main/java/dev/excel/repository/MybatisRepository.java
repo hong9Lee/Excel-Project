@@ -1,5 +1,6 @@
 package dev.excel.repository;
 
+import dev.excel.dto.SampleVO;
 import dev.excel.utils.mapper.DataMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
